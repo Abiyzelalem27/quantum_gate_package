@@ -1,6 +1,7 @@
 
 
 ## Week 1
-- Consolidated previous quantum simulation work into a single reusable package.
-- Organized notebooks, tests, and core implementation into a clean project structure.
-- Set up weekly changelog tracking with Git and GitHub.
+- Implemented a unified quantum gate framework supporting both state vectors and density matrices.
+- Added comprehensive unit tests validating gate construction, evolution, and controlled operations.
+- Verified correctness through structural, compositional, and basis-state tests.
+  
