@@ -2,8 +2,6 @@
 
 ## Overview
 
-This project implements a lightweight quantum simulation framework for constructing and applying **quantum gate operators** on an **n-qubit register**.  
-It supports both **state-vector** and **density-matrix** representations of quantum states.
+The repository contains a collection of quantum computing implementations focusing on quantum gate operations, Bloch sphere representations, and quantum state preparation. 
 
-The goal of the project is to demonstrate correct operator construction, proper qubit indexing, and test-driven validation of quantum operations.
-
+These materials Simulation-based analysis and visualization, providing a structured learning as part of an internship project.

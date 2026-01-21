@@ -66,6 +66,8 @@ def test_U_two_gates():
     N = 3
     i = 0
     j = 2
-    U_two = U_two_gates(H, X, i, j, N)
-    U_comp = U_one_gate(H, i, N) @ U_one_gate(X, j, N)
-    assert np.allclose(U_two, U_comp)
+    for i in [0,1,2]:
+        for j in [0,1,2]:
+            U_two = U_two_gates(H, X, i, j, N)
+            U_comp = U_one_gate(H, i, N) @ U_one_gate(X, j, N)
+            assert np.allclose(U_two, U_comp)
