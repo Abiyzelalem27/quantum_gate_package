@@ -24,7 +24,7 @@ Y = np.array([[0, -1j],
 Z = np.array([[1,  0],
               [0, -1]])
 
-# Hadamard gate(Creates superposition states)
+# Hadamard gate (Creates superposition states)
 H = 1 / np.sqrt(2) * np.array([[1,  1],
                                [1, -1]])
 
@@ -44,6 +44,7 @@ S = np.array([[1, 0],
 T = np.array([[1, 0],
               [0, np.e**(1j * np.pi / 4)]])
 
+
 def projectors(dim):
     """
     Generate computational basis projectors {|i><i|} with the given dimension.
@@ -55,6 +56,7 @@ def projectors(dim):
         P = np.outer(ket, ket)
         projectors.append(P)
     return projectors
+
 
 # SINGLE-QUBIT ROTATION GATE
 
@@ -75,11 +77,11 @@ def rotation_gate(theta, n):
     n : tuple of floats
         Rotation axis (nx, ny, nz).
     """
-
     nx, ny, nz = n
     N = nx * X + ny * Y + nz * Z
     R = np.cos(theta / 2) * I - 1j * np.sin(theta / 2) * N
     return R
+
 
 # TWO-QUBIT GATE
 
@@ -90,7 +92,6 @@ CNOT = np.array([[1, 0, 0, 0],
                  [0, 1, 0, 0],
                  [0, 0, 0, 1],
                  [0, 0, 1, 0]])
-
 
 
 # MULTI-QUBIT OPERATOR CONSTRUCTION
@@ -145,7 +146,6 @@ def U_two_gates(V, W, i, j, N):
         applies the composed gate V @ W on qubit i,
         preserving operator ordering.
     """
-
     ops = [I] * N
 
     if i == j:
@@ -169,12 +169,9 @@ def rho(states, probabilities):
         State vectors.
     probabilities : list of float
         Classical probabilities.
-
-    
     """
     return sum(p * np.outer(psi, psi.conj())
                for psi, p in zip(states, probabilities))
-
 
 
 # QUANTUM STATE EVOLUTION
@@ -199,13 +196,6 @@ def evolve(state, U):
     else:
         raise ValueError("State must be a vector or a density matrix")
 
-    
-def kron_all(ops):
-    """Kronecker product of a list of operators."""
-    result = ops[0]
-    for op in ops[1:]:
-        result = np.kron(result, op)
-    return result
 
 def controlled_gate(U, control, target, N):
     """
@@ -215,23 +205,19 @@ def controlled_gate(U, control, target, N):
 
         C_U = P0(control) ⊗ I  +  P1(control) ⊗ U(target)
     """
-    
-
     if control == target:
         raise ValueError("Control and target must be different.")
 
-
-# Operator acting on the subspace where control qubit is |0⟩
+    # Operator acting on the subspace where control qubit is |0⟩
     P0_ops = [
         P0 if i == control else I
         for i in range(N)
     ]
 
-# Operator acting on the subspace where control qubit is |1⟩
+    # Operator acting on the subspace where control qubit is |1⟩
     P1_ops = [
         P1 if i == control else U if i == target else I
         for i in range(N)
-]
+    ]
 
-    return (kron_all(P0_ops)+kron_all(P1_ops))
-
+    return U_N_qubits(P0_ops) + U_N_qubits(P1_ops)

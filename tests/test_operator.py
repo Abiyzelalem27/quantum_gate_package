@@ -1,9 +1,9 @@
-
 import numpy as np
-from quantum_gate_package import (
+import pytest
+from quantum_gate_package import ( 
     I, X, Y, Z, H, S, T,
     P0, P1,
-    U_one_gate, U_two_gates, controlled_gate, projectors
+    U_one_gate, U_two_gates, controlled_gate, projectors,U_N_qubits
 )
 
 
@@ -17,7 +17,7 @@ def test_projector_operators():
 
 def test_I_gate():
     """check that I is unitary"""
-    assert np.allclose(I.conj().T @ I, I)
+    assert np.allclose(I.conj().T @ I, np.eye(2))
 
 
 def test_X_gate():
@@ -55,6 +55,73 @@ def test_H_gate():
     assert np.allclose(H.conj().T @ H, I)
     assert np.allclose(H @ H, I)
 
+
+# ==========================================================
+# IMPROVED CONTROLLED-GATE TESTS (WITH LOOPS + ERROR CHECK)
+# ==========================================================
+
+def test_controlled_gate_raises_error_when_control_equals_target():
+    """
+    Explicitly check that controlled_gate raises ValueError
+    when control == target, for multiple system sizes.
+    """
+    for N in [2, 3, 4]:
+        for i in range(N):
+            with pytest.raises(ValueError, match="Control and target must be different"):
+                controlled_gate(X, i, i, N)
+
+
+def test_controlled_gate_matches_projector_definition_all_indices():
+    """
+    Verify controlled_gate(U, control, target, N) matches the projector form:
+
+        C_U = P0(control) ⊗ I  +  P1(control) ⊗ U(target)
+
+    for all valid (control, target) pairs in N qubits.
+    """
+    for N in [2, 3, 4]:
+        for control in range(N):
+            for target in range(N):
+
+                if control == target:
+                    continue
+
+                C_U = controlled_gate(X, control, target, N)
+
+                # Expected operator (projector decomposition)
+                P0_ops = [
+                    P0 if i == control else I
+                    for i in range(N)
+                ]
+
+                P1_ops = [
+                    P1 if i == control else X if i == target else I
+                    for i in range(N)
+                ]
+
+                expected = U_N_qubits(P0_ops) + U_N_qubits(P1_ops)
+
+                assert np.allclose(C_U, expected)
+
+
+def test_controlled_gate_unitary_all_indices():
+    """
+    Controlled version of a unitary gate must also be unitary.
+    """
+    for N in [2, 3, 4]:
+        dim = 2**N
+        Id = np.eye(dim)
+
+        for control in range(N):
+            for target in range(N):
+
+                if control == target:
+                    continue
+
+                C_U = controlled_gate(X, control, target, N)
+
+                assert np.allclose(C_U.conj().T @ C_U, Id)
+                assert np.allclose(C_U @ C_U.conj().T, Id)
 
 
 def test_controlled_gate_01_X():
@@ -125,18 +192,16 @@ def test_controlled_gate_psi():
     psi_out = C_Z @ psi
 
     expected = np.zeros(4)
-    expected[3] = -1 # -|11⟩
+    expected[3] = -1  # -|11⟩
 
     assert np.allclose(psi_out, expected)
+
 
 def test_controlled_gate_02_X():
     """Controlled-X gate on a 3-qubit register with control qubit 0 and target qubit 2.
 
     C_X = (P0 ⊗ I ⊗ I) + (P1 ⊗ I ⊗ X)
-"""
-
-    import numpy as np
-
+    """
     N = 3
     control = 0
     target = 2
@@ -173,24 +238,23 @@ def test_controlled_gate_02_psi():
     assert np.allclose(psi_out, psi)
 
 
-
 def test_projectors_hermitian_and_idempotent():
     """
     Each projector must be Hermitian and idempotent.
     """
-    dim = 2   # arbitrary dimension 
+    dim = 2  # arbitrary dimension
     P = projectors(dim)
 
     for Pi in P:
-        assert np.allclose(Pi.conj().T, Pi)      # Hermiticity
-        assert np.allclose(Pi @ Pi, Pi)           # Idempotence
+        assert np.allclose(Pi.conj().T, Pi)   # Hermiticity
+        assert np.allclose(Pi @ Pi, Pi)       # Idempotence
 
 
 def test_projectors_orthogonal():
     """
     Different projectors must be orthogonal.
     """
-    dim = 4   
+    dim = 4
     P = projectors(dim)
 
     for i in range(dim):
@@ -203,22 +267,42 @@ def test_projectors_identity():
     """
     Sum of projectors equals the identity.
     """
-    dim = 6   
+    dim = 6
     P = projectors(dim)
-    I = np.eye(dim)
+    Id = np.eye(dim)
 
-    assert np.allclose(sum(P), I)
-    
+    assert np.allclose(sum(P), Id)
+
 
 def test_U_two_gates():
     """
     Verify correct embedding of two single-qubit gates
     on an N-qubit system, for both i != j and i == j.
     """
+    N = 3
+
+    # Case 1: i != j
+    i, j = 0, 2
+    U_two = U_two_gates(H, X, i, j, N)
+    expected = U_one_gate(H, i, N) @ U_one_gate(X, j, N)
+    assert np.allclose(U_two, expected)
+
+    # Case 2: i == j
+    i = j = 1
+    U_two = U_two_gates(H, X, i, j, N)
+    expected = U_one_gate(H @ X, i, N)
+    assert np.allclose(U_two, expected)
+
+    # Case 3: reversed indices
+    i, j = 2, 0
+    U_two = U_two_gates(H, X, i, j, N)
+    expected = U_one_gate(H, i, N) @ U_one_gate(X, j, N)
+    assert np.allclose(U_two, expected)
+
 
 def test_U_two_gates_different_qubits():
     N = 3
-    
+
     i, j = 0, 2
     U_two = U_two_gates(H, X, i, j, N)
     expected = U_one_gate(H, i, N) @ U_one_gate(X, j, N)
@@ -228,7 +312,7 @@ def test_U_two_gates_different_qubits():
 
 def test_U_two_gates_same_qubit():
     N = 3
-    
+
     i = j = 1
     U_two = U_two_gates(H, X, i, j, N)
     expected = U_one_gate(H @ X, i, N)
@@ -244,5 +328,3 @@ def test_U_two_gates_reversed_indices():
     expected = U_one_gate(H, i, N) @ U_one_gate(X, j, N)
 
     assert np.allclose(U_two, expected)
-
-
