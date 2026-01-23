@@ -17,6 +17,7 @@ rotation_gate,
     U_two_gates,
     rho,
     evolve,
+controlled_gate,
 )
 
 __all__ = [
@@ -36,4 +37,5 @@ __all__ = [
     "U_two_gates",
     "rho",
     "evolve",
+    "controlled_gate",
 ]

@@ -125,22 +125,26 @@ def U_one_gate(V, i, N):
 
 def U_two_gates(V, W, i, j, N):
     """
-    Applies two single-qubit gates to different qubits.
+    Applies two single-qubit gates to an N-qubit system.
 
-    Parameters
-    ----------
-    V, W : numpy.ndarray
-        Single-qubit gates.
-    i, j : int
-        Target qubit indices.
-    N : int
-        Total number of qubits.
+    If i != j:
+        applies V on qubit i and W on qubit j.
 
+    If i == j:
+        applies the composed gate V @ W on qubit i,
+        preserving operator ordering.
     """
+
     ops = [I] * N
-    ops[i] = V
-    ops[j] = W
+
+    if i == j:
+        ops[i] = V @ W
+    else:
+        ops[i] = V
+        ops[j] = W
+
     return U_N_qubits(ops)
+
 
 # DENSITY MATRIX REPRESENTATION
 
@@ -184,7 +188,39 @@ def evolve(state, U):
     else:
         raise ValueError("State must be a vector or a density matrix")
 
-        
+    
+def kron_all(ops):
+    """Kronecker product of a list of operators."""
+    result = ops[0]
+    for op in ops[1:]:
+        result = np.kron(result, op)
+    return result
+
+def controlled_gate(U, control, target, N):
+    """
+    Controlled-U gate on an N-qubit register.
+
+    Implements the projector decomposition:
+
+        C_U = P0(control) ⊗ I  +  P1(control) ⊗ U(target)
+    """
+    
+
+    if control == target:
+        raise ValueError("Control and target must be different.")
 
 
+# Operator acting on the subspace where control qubit is |0⟩
+    P0_ops = [
+        P0 if i == control else I
+        for i in range(N)
+    ]
+
+# Operator acting on the subspace where control qubit is |1⟩
+    P1_ops = [
+        P1 if i == control else U if i == target else I
+        for i in range(N)
+]
+
+    return (kron_all(P0_ops)+kron_all(P1_ops))
 
