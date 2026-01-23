@@ -3,7 +3,7 @@ import numpy as np
 from quantum_gate_package import (
     I, X, Y, Z, H, S, T,
     P0, P1,
-    U_one_gate, U_two_gates, controlled_gate
+    U_one_gate, U_two_gates, controlled_gate, projectors
 )
 
 
@@ -55,15 +55,6 @@ def test_H_gate():
     assert np.allclose(H.conj().T @ H, I)
     assert np.allclose(H @ H, I)
 
-
-def test_U_two_gates():
-    """verify composition of two single-qubit gates on an N-qubit system"""
-    for N in [1]:
-        for i in range(N):
-            for j in range(N):
-                U_two = U_two_gates(H, X, i, j, N)
-                U_comp = U_one_gate(H, i, N) @ U_one_gate(X, j, N)
-                assert np.allclose(U_two, U_comp)
 
 
 def test_controlled_gate_01_X():
@@ -180,4 +171,78 @@ def test_controlled_gate_02_psi():
     psi_out = C_X @ psi
 
     assert np.allclose(psi_out, psi)
+
+
+
+def test_projectors_hermitian_and_idempotent():
+    """
+    Each projector must be Hermitian and idempotent.
+    """
+    dim = 2   # arbitrary dimension 
+    P = projectors(dim)
+
+    for Pi in P:
+        assert np.allclose(Pi.conj().T, Pi)      # Hermiticity
+        assert np.allclose(Pi @ Pi, Pi)           # Idempotence
+
+
+def test_projectors_orthogonal():
+    """
+    Different projectors must be orthogonal.
+    """
+    dim = 4   
+    P = projectors(dim)
+
+    for i in range(dim):
+        for j in range(dim):
+            if i != j:
+                assert np.allclose(P[i] @ P[j], 0)
+
+
+def test_projectors_identity():
+    """
+    Sum of projectors equals the identity.
+    """
+    dim = 6   
+    P = projectors(dim)
+    I = np.eye(dim)
+
+    assert np.allclose(sum(P), I)
+    
+
+def test_U_two_gates():
+    """
+    Verify correct embedding of two single-qubit gates
+    on an N-qubit system, for both i != j and i == j.
+    """
+
+def test_U_two_gates_different_qubits():
+    N = 3
+    
+    i, j = 0, 2
+    U_two = U_two_gates(H, X, i, j, N)
+    expected = U_one_gate(H, i, N) @ U_one_gate(X, j, N)
+
+    assert np.allclose(U_two, expected)
+
+
+def test_U_two_gates_same_qubit():
+    N = 3
+    
+    i = j = 1
+    U_two = U_two_gates(H, X, i, j, N)
+    expected = U_one_gate(H @ X, i, N)
+
+    assert np.allclose(U_two, expected)
+
+
+def test_U_two_gates_reversed_indices():
+    N = 3
+
+    i, j = 2, 0
+    U_two = U_two_gates(H, X, i, j, N)
+    expected = U_one_gate(H, i, N) @ U_one_gate(X, j, N)
+
+    assert np.allclose(U_two, expected)
+
 

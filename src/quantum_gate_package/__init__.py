@@ -18,6 +18,7 @@ rotation_gate,
     rho,
     evolve,
 controlled_gate,
+projectors,
 )
 
 __all__ = [
@@ -38,4 +39,5 @@ __all__ = [
     "rho",
     "evolve",
     "controlled_gate",
+    "projectors",
 ]

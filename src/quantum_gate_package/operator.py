@@ -44,6 +44,17 @@ S = np.array([[1, 0],
 T = np.array([[1, 0],
               [0, np.e**(1j * np.pi / 4)]])
 
+def projectors(dim):
+    """
+    Generate computational basis projectors {|i><i|} with the given dimension.
+    """
+    projectors = []
+    for i in range(dim):
+        ket = np.zeros(dim)
+        ket[i] = 1
+        P = np.outer(ket, ket)
+        projectors.append(P)
+    return projectors
 
 # SINGLE-QUBIT ROTATION GATE
 
